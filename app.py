@@ -75,7 +75,8 @@ def parse_and_check():
         date_only = parsed_dt.strftime("%Y-%m-%d")
 
         # GAS 웹앱 URL (너의 실제 스크립트 ID로 대체할 것!)
-        GAS_URL = "https://script.google.com/macros/s/AKfycbxBFKpceaLSUF78Z5uZ289zK4J7d11ecWl1BjjQLOmlZIteTwI8z2VpyssBB1XnWGo5Sw/exec"
+        GAS_URL = "https://script.google.com/macros/s/AKfycbzQ9KYakQ7BcB5LeGgBZ3-d-Q61LsfQw8AZjFLwdzBomAn7iE3Uuk8rlDu3QTBtQVu1jA/exec"
+    
         res = requests.post(GAS_URL, json={"year": year, "date": date_only}, timeout=5)
 
         if res.status_code != 200:

@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 import os
 import requests
+from dateutil.parser import parse
 
 app = Flask(__name__)
 
-# ✅ 기존 계산 기능: snapClassic + snapSig 계산
+# ✅ 기존 기능: snapClassic, snapSig 가격 계산
 @app.route('/skill', methods=['POST'])
 def skill():
     data = request.get_json()
@@ -22,7 +23,7 @@ def skill():
     sig_price = price_map.get(sig, 0)
     total = classic_price + sig_price
 
-    response = {
+    return jsonify({
         "version": "2.0",
         "template": {
             "outputs": [
@@ -37,27 +38,24 @@ def skill():
             "summary": f"클래식: {classic_price}원, 시그니처: {sig_price}원",
             "total": total
         }
-    }
-
-    return jsonify(response)
+    })
 
 
-# ✅ 추가 기능: 날짜 기반 GAS 연동 예약 가능 여부 체크
-@app.route('/check-date', methods=['POST'])
-def check_date():
+# ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
+@app.route('/parse-and-check', methods=['POST'])
+def parse_and_check():
     try:
         data = request.get_json()
-        datetime_param = data.get("action", {}).get("params", {}).get("Weddingday")  # ← 여기 수정
+        raw_input = data.get("action", {}).get("params", {}).get("Weddingday")
 
-        if not datetime_param:
-            raise ValueError("날짜 파라미터가 없습니다.")
+        if not raw_input:
+            raise ValueError("사용자 입력값(Weddingday)이 없습니다.")
 
-        date_only = datetime_param.split("T")[0]  # "2025-02-25"
-        year = date_only.split("-")[0]            # "2025"
+        parsed_dt = parse(raw_input, fuzzy=True)
+        year = parsed_dt.strftime("%Y")
+        date_only = parsed_dt.strftime("%Y-%m-%d")
 
-        # 여기에 너의 GAS 웹앱 URL
         GAS_URL = "https://script.google.com/macros/s/AKfycbxBFKpceaLSUF78Z5uZ289zK4J7d11ecWl1BjjQLOmlZIteTwI8z2VpyssBB1XnWGo5Sw/exec"
-
         res = requests.post(GAS_URL, json={"year": year, "date": date_only}, timeout=5)
         result = res.json()
         count = result.get("foundCount", 0)
@@ -73,9 +71,7 @@ def check_date():
         return jsonify({
             "version": "2.0",
             "template": {
-                "outputs": [
-                    {"simpleText": {"text": message}}
-                ]
+                "outputs": [{"simpleText": {"text": message}}]
             }
         })
 
@@ -83,12 +79,9 @@ def check_date():
         return jsonify({
             "version": "2.0",
             "template": {
-                "outputs": [
-                    {"simpleText": {"text": f"오류가 발생했습니다: {str(e)}"}}
-                ]
+                "outputs": [{"simpleText": {"text": f"❗ 오류 발생: {str(e)}"}}]
             }
         })
-
 
 # ✅ Render 포트 설정
 if __name__ == '__main__':

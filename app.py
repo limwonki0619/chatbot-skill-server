@@ -147,7 +147,7 @@ def calculate_price_with_korean_labels(
     def label(items):
         return "없음" if not items else ", ".join(label_map.get(i, i) for i in items)
 
-    summary = f"""🎉 아래는 고객님이 선택하신 구성 및 견적입니다!
+    summary = f"""요청해주신 구성으로 견적 안내드릴게요 :)
 
 [영상상품] {filmProduct}
 [영상옵션] {label(film_opts)}
@@ -158,7 +158,7 @@ def calculate_price_with_korean_labels(
 [추가촬영] {label(adds)}
 [할인이벤트] {label(discounts)}
 
-[총금액] {total_price:,}원
+[금액] {total_price:,}원
 [부가세(10%)] {vat:,}원
 ※ 대전/청주 이외 지역은 출장비가 발생할 수 있습니다."""
 

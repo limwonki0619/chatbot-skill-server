@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
+import json
 import os
 import requests
 import re
@@ -54,23 +55,23 @@ def calculate_price_with_korean_labels(
     label_map = {
         "F.snsHighlight": "SNS용 1분 H/L (세로형) +5",
         "F.subVideoDirector": "서브 영상감독 추가 +25",
-        "F.videoDesignated": "감독지정 +10",
-        "F.videoDirector": "대표감독지정 +30",
+        "F.videoDesignated": "감독 지정 +10",
+        "F.videoDirector": "대표감독 지정 +30",
         "F.usb": "USB추가 +5",
-        "S.iphoneSnap": "아이폰스냅추가 +15",
-        "S.iphoneSnapPremium": "아이폰 스냅 프리미엄추가 +25",
+        "S.iphoneSnap": "아이폰스냅 추가 +15",
+        "S.iphoneSnapPremium": "아이폰스냅 프리미엄추가 +25",
         "S.subSnap": "서브스냅추가 +20",
-        "S.snapDesignated": "작가지정 +10",
-        "S.snapDirector": "대표작가지정 +30",
+        "S.snapDesignated": "작가 지정 +10",
+        "S.snapDirector": "대표작가 지정 +30",
         "A.portrait": "원판",
         "A.pyebaek": "폐백",
         "A.banquet": "연회",
         "A.secondPart": "2부",
         "D.partner": "짝궁 -2",
-        "D.earlybird": "얼리버드(예식1년전예약) -1",
+        "D.earlybird": "얼리버드(예식 1년 전 예약) -1",
         "D.review": "계약 또는 촬영후기 -2",
-        "D.sunday": "일요일 예식 -1",
-        "D.evening": "저녁예식(오후4시이후) -1"
+        "D.sunday": "일요일예식 -1",
+        "D.evening": "저녁예식(오후 4시 이후) -1"
     }
 
     film_prices = {"클래식": 60, "시그니처": 75, "노블레스": 99, "선택안함": 0}
@@ -183,13 +184,13 @@ def calculator():
             discountEvent=params.get("discountEvent", "")
         )
 
-        return jsonify({
+        response = {
             "version": "2.0",
             "template": {
                 "outputs": [
                     {
                         "simpleText": {
-                            "text": result["summary"].replace("\n", "\\n")
+                            "text": result["summary"]
                         }
                     }
                 ]
@@ -199,7 +200,13 @@ def calculator():
                 "totalPrice": result["totalPrice"],
                 "vat": result["vat"]
             }
-        })
+        }
+
+        return make_response(
+            json.dumps(response, ensure_ascii=False),
+            200,
+            {"Content-Type": "application/json"}
+        )
 
     except Exception as e:
         return jsonify({

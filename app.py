@@ -240,39 +240,50 @@ def parse_korean_date(text):
     return parse(cleaned, fuzzy=True)
 
 # ✅ 날짜 파싱 + GAS 예약 확인 통합
+from flask import Flask, request, make_response, jsonify
+import requests
+import json
+from dateutil.parser import parse
+
+app = Flask(__name__)
+
 @app.route("/parse-and-check", methods=["POST"])
 def parse_and_check():
     try:
+        # 1. 사용자 입력값 파싱
         data = request.get_json()
         raw_input = data.get("action", {}).get("params", {}).get("Weddingday", "")
         is_admin = raw_input.startswith("!")
         clean_input = raw_input.lstrip("!").strip()
 
-        # 날짜 파싱
-        parsed = parse(clean_input, fuzzy=True)
-        year = parsed.strftime("%Y")
-        date = parsed.strftime("%Y-%m-%d")
-        pretty_date = parsed.strftime("%Y년 %m월 %d일")
+        # 2. 날짜 파싱
+        parsed_dt = parse(clean_input, fuzzy=True)
+        year = parsed_dt.strftime("%Y")
+        date_str = parsed_dt.strftime("%Y-%m-%d")
 
-        # GAS 요청
-        gas_url = "https://script.google.com/macros/s/AKfycbz2vcWjotUE59P8A3EDzFG_0Wk6Q1r65rkek19o3whWfIDZiGafItPpZDQbINWKO15wZw/exec"  # 네 GAS URL로 대체
-        res = requests.post(gas_url, json={"year": year, "date": date})
-        result = res.json()
+        # 날짜만 포맷
+        pretty_date = parsed_dt.strftime("%Y년 %m월 %d일")
 
-        found = result.get("foundCount", 0)
-        sheet_exists = result.get("sheetExists", False)
+        # 3. GAS 요청
+        gas_url = "https://script.google.com/macros/s/AKfycbz2vcWjotUE59P8A3EDzFG_0Wk6Q1r65rkek19o3whWfIDZiGafItPpZDQbINWKO15wZw/exec"  # 실제 GAS URL로 대체
+        gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
+        gas_result = gas_response.json()
 
-        # 응답 구성
+        found = gas_result.get("foundCount", 0)
+        sheet_exists = gas_result.get("sheetExists", False)
+
+        # 4. 응답 메시지 생성
         if not sheet_exists:
-            message = f"{pretty_date}은 예약 가능합니다."
+            message = f"{pretty_date}은 예약 가능합니다. (해당 연도 시트 없음)"
         elif is_admin:
             message = f"{pretty_date}은 예약 {found}건 등록되어 있습니다."
         elif found >= 10:
-            message = f"{pretty_date}은 예약이 많은 날짜예요. 정확한 가능 여부는 상담 후 안내드릴 수 있어요."
+            message = f"{pretty_date}은 예약이 많아 먼저 상담 후 가능 여부를 안내드릴게요."
         else:
             message = f"{pretty_date}은 예약 가능합니다."
 
-        return make_response(json.dumps({
+        # 5. 챗봇 응답 포맷
+        response = {
             "version": "2.0",
             "template": {
                 "outputs": [
@@ -281,9 +292,14 @@ def parse_and_check():
             },
             "data": {
                 "mode": "admin" if is_admin else "user",
-                "count": found
+                "date": date_str,
+                "foundCount": found
             }
-        }, ensure_ascii=False), 200, {"Content-Type": "application/json"})
+        }
+
+        return make_response(json.dumps(response, ensure_ascii=False), 200, {
+            "Content-Type": "application/json"
+        })
 
     except Exception as e:
         return jsonify({
@@ -294,6 +310,7 @@ def parse_and_check():
                 ]
             }
         })
+
 
 # 포트 설정
 if __name__ == '__main__':

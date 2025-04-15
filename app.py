@@ -128,17 +128,20 @@ def calculate_price_with_korean_labels(
 
     summary = f"""요청해주신 구성으로 견적 안내드릴게요 :)
 
-[영상상품] {filmProduct}
-[영상옵션] {label(film_opts)}
+🎬 [영상상품] {filmProduct}
+🔶 [영상옵션] {label(film_opts)}
 
-[스냅상품] {snapProduct}
-[스냅옵션] {label(snap_opts)}
+📷 [스냅상품] {snapProduct}
+🔷 [스냅옵션] {label(snap_opts)}
 
-[할인이벤트] {label(discounts)}
+🎁 [할인이벤트] {label(discounts)}
 
-[금액] {total_price:,}원
-[부가세(10%)] {vat:,}원
-※ 대전/청주 이외 지역은 출장비가 발생할 수 있습니다."""
+💰 [금액] {total_price:,}원
+✔️ [부가세(10%)] {vat:,}원
+
+※ 대전/세종/청주 이외 지역은 출장비가 발생 됩니다.
+※ 원판, 연회, 폐백, 2부 촬영에 대한 자세한 내용은 상담을 통해 안내드립니다.
+"""
 
     return {
         "summary": summary,

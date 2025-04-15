@@ -7,7 +7,6 @@ from dateutil.parser import parse
 
 app = Flask(__name__)
 
-# ✅ 기존 기능: snapClassic, snapSig 가격 계산
 # 계산 함수
 def calculate_price_with_korean_labels(
     snapProduct,
@@ -59,8 +58,8 @@ def calculate_price_with_korean_labels(
         "F.videoDirector": "대표감독 지정 +30",
         "F.usb": "USB추가 +5",
         "S.iphoneSnap": "아이폰스냅 추가 +15",
-        "S.iphoneSnapPremium": "아이폰스냅 프리미엄추가 +25",
-        "S.subSnap": "서브스냅추가 +20",
+        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가 +25",
+        "S.subSnap": "서브스냅 추가 +20",
         "S.snapDesignated": "작가 지정 +10",
         "S.snapDirector": "대표작가 지정 +30",
         "A.portrait": "원판",
@@ -148,7 +147,7 @@ def calculate_price_with_korean_labels(
     def label(items):
         return "없음" if not items else ", ".join(label_map.get(i, i) for i in items)
 
-    summary = f"""🎉 아래는 고객님이 선택하신 구성입니다!
+    summary = f"""🎉 아래는 고객님이 선택하신 구성 및 견적입니다!
 
 [영상상품] {filmProduct}
 [영상옵션] {label(film_opts)}

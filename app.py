@@ -87,29 +87,38 @@ def calculate_price_with_korean_labels(
         "D.evening": 1
     }
 
+    # ✅ 문자열 숫자 → 매핑 함수 (공백 제거 포함)
     def map_nums(nums, table):
-        return [table[n.strip()] for n in nums.split(",") if n.strip() in table and table[n.strip()] is not None] if nums else []
+        return [
+            table[n.strip()]
+            for n in nums.split(",")
+            if n.strip() in table and table[n.strip()] is not None
+        ] if nums else []
 
+    # ✅ 매핑 처리
     snap_opts = map_nums(snapOptions, snap_option_map)
     film_opts = map_nums(filmOptions, film_option_map)
     discounts = map_nums(discountEvent, discount_map)
 
+    # ✅ 기본 상품 가격
     snap_base = snap_prices.get(snapProduct, 0)
     film_base = film_prices.get(filmProduct, 0)
 
-    # 🎁 상품 결합할인
+    # 🎁 상품 결합 할인 (상품가만 적용)
     product_total = snap_base + film_base
     if snapProduct != "선택안함" and filmProduct != "선택안함":
         product_total *= 0.9
 
+    # ✅ 옵션 가격 합산
     total = product_total
     total += sum(snap_option_prices.get(opt, 0) for opt in snap_opts)
     total += sum(film_option_prices.get(opt, 0) for opt in film_opts)
 
-    # 🎉 기타 할인
+    # ✅ 기타 할인
     for d in discounts:
         total -= discount_values.get(d, 0)
 
+    # ✅ 계산 정리
     total = max(total, 0)
     total_price = int(total * 10000)
     vat = int(total_price * 0.1)
@@ -140,27 +149,18 @@ def calculate_price_with_korean_labels(
 @app.route("/calculator", methods=["POST"])
 def calculator():
     try:
-        # 1. 파라미터 안전하게 추출
         data = request.get_json(force=True)
         params = data.get("action", {}).get("params", {})
 
-        snap_product = params.get("snapProduct", "선택안함")
-        snap_options = params.get("snapOptions", "")
-        film_product = params.get("filmProduct", "선택안함")
-        film_options = params.get("filmOptions", "")
-        discount_event = params.get("discountEvent", "")
-
-        # 2. 가격 계산 함수 호출
         result = calculate_price_with_korean_labels(
-            snapProduct=snap_product,
-            snapOptions=snap_options,
-            filmProduct=film_product,
-            filmOptions=film_options,
-            discountEvent=discount_event
+            snapProduct=params.get("snapProduct", "선택안함"),
+            snapOptions=params.get("snapOptions", ""),
+            filmProduct=params.get("filmProduct", "선택안함"),
+            filmOptions=params.get("filmOptions", ""),
+            discountEvent=params.get("discountEvent", "")
         )
 
-        # 3. 성공 응답 구성
-        response_body = {
+        response = {
             "version": "2.0",
             "template": {
                 "outputs": [
@@ -179,20 +179,19 @@ def calculator():
         }
 
         return make_response(
-            json.dumps(response_body, ensure_ascii=False),
+            json.dumps(response, ensure_ascii=False),
             200,
             {"Content-Type": "application/json"}
         )
 
     except Exception as e:
-        # 4. 에러 응답 구성
-        error_response = {
+        return jsonify({
             "version": "2.0",
             "template": {
                 "outputs": [
                     {
                         "simpleText": {
-                            "text": f"⚠️ 견적 계산 중 오류가 발생했어요. 다시 시도해 주세요."
+                            "text": f"⚠️ 계산 중 오류 발생: {str(e)}"
                         }
                     }
                 ]
@@ -200,13 +199,7 @@ def calculator():
             "data": {
                 "error": str(e)
             }
-        }
-        return make_response(
-            json.dumps(error_response, ensure_ascii=False),
-            200,
-            {"Content-Type": "application/json"}
-        )
-
+        })
 
 # ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
 # ✅ 한국어 날짜 문자열 보정 함수

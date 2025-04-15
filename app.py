@@ -17,6 +17,7 @@ def calculate_price_with_korean_labels(
     discountEvent
 ):
     snap_option_map = {
+        "0": None,
         "1": "S.iphoneSnap",
         "2": "S.iphoneSnapPremium",
         "3": "S.subSnap",
@@ -25,6 +26,7 @@ def calculate_price_with_korean_labels(
     }
 
     film_option_map = {
+        "0": None,
         "1": "F.snsHighlight",
         "2": "F.subVideoDirector",
         "3": "F.videoDesignated",
@@ -33,6 +35,7 @@ def calculate_price_with_korean_labels(
     }
 
     additional_map = {
+        "0": None,
         "1": "A.portrait",
         "2": "A.pyebaek",
         "3": "A.banquet",
@@ -40,6 +43,7 @@ def calculate_price_with_korean_labels(
     }
 
     discount_map = {
+        "0": None,
         "2": "D.partner",
         "3": "D.earlybird",
         "4": "D.review",
@@ -97,7 +101,7 @@ def calculate_price_with_korean_labels(
     }
 
     def map_nums(nums, table):
-        return [table[n.strip()] for n in nums.split(",") if n.strip() in table] if nums else []
+        return [table[n.strip()] for n in nums.split(",") if n.strip() in table and table[n.strip()] is not None] if nums else []
 
     snap_opts = map_nums(snapOptions, snap_option_map)
     film_opts = map_nums(filmOptions, film_option_map)
@@ -107,23 +111,21 @@ def calculate_price_with_korean_labels(
     snap_base = snap_prices.get(snapProduct, 0)
     film_base = film_prices.get(filmProduct, 0)
 
-    # 🎁 결합할인: 상품가 10% 할인
+    # 🎁 상품 결합할인
     product_total = snap_base + film_base
     if snapProduct != "선택안함" and filmProduct != "선택안함":
         product_total *= 0.9
 
     total = product_total
-
-    # 📷 옵션가
     total += sum(snap_option_prices.get(opt, 0) for opt in snap_opts)
     total += sum(film_option_prices.get(opt, 0) for opt in film_opts)
 
     # 📱 아이폰스냅 자동 무료
     if snapProduct in ["시그니처", "노블레스"] and filmProduct in ["시그니처", "노블레스"]:
         if "S.iphoneSnap" in snap_opts:
-            total -= snap_option_prices["S.iphoneSnap"]
+            total -= snap_option_prices.get("S.iphoneSnap", 0)
 
-    # 📸 추가촬영비
+    # 📸 추가촬영 비용 조건
     if snapProduct == "노블레스" and filmProduct == "노블레스":
         add_total = 0
     elif snapProduct != "선택안함" and filmProduct != "선택안함":
@@ -138,13 +140,12 @@ def calculate_price_with_korean_labels(
     for d in discounts:
         total -= discount_values.get(d, 0)
 
-    # 계산
     total = max(total, 0)
     total_price = int(total * 10000)
     vat = int(total_price * 0.1)
 
     def label(items):
-        return ", ".join(label_map.get(i, i) for i in items) if items else "없음"
+        return "없음" if not items else ", ".join(label_map.get(i, i) for i in items)
 
     summary = f"""🎉 아래는 고객님이 선택하신 구성입니다!
 
@@ -167,7 +168,6 @@ def calculate_price_with_korean_labels(
         "vat": vat
     }
 
-# 🔁 /calculator 라우트
 @app.route("/calculator", methods=["POST"])
 def calculator():
     try:
@@ -214,6 +214,7 @@ def calculator():
                 ]
             }
         })
+
 
 # ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
 # ✅ 한국어 날짜 문자열 보정 함수

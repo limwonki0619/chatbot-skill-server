@@ -13,7 +13,6 @@ def calculate_price_with_korean_labels(
     snapOptions,
     filmProduct,
     filmOptions,
-    additionalShoot,
     discountEvent
 ):
     snap_option_map = {
@@ -34,43 +33,31 @@ def calculate_price_with_korean_labels(
         "5": "F.usb"
     }
 
-    additional_map = {
-        "0": None,
-        "1": "A.portrait",
-        "2": "A.pyebaek",
-        "3": "A.banquet",
-        "4": "A.secondPart"
-    }
-
     discount_map = {
         "0": None,
-        "2": "D.partner",
-        "3": "D.earlybird",
-        "4": "D.review",
-        "5": "D.sunday",
-        "6": "D.evening"
+        "1": "D.partner",
+        "2": "D.earlybird",
+        "3": "D.review",
+        "4": "D.sunday",
+        "5": "D.evening"
     }
 
     label_map = {
-        "F.snsHighlight": "SNS용 1분 H/L (세로형) +5",
-        "F.subVideoDirector": "서브 영상감독 추가 +25",
-        "F.videoDesignated": "감독 지정 +10",
-        "F.videoDirector": "대표감독 지정 +30",
-        "F.usb": "USB추가 +5",
-        "S.iphoneSnap": "아이폰스냅 추가 +15",
-        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가 +25",
-        "S.subSnap": "서브스냅 추가 +20",
-        "S.snapDesignated": "작가 지정 +10",
-        "S.snapDirector": "대표작가 지정 +30",
-        "A.portrait": "원판",
-        "A.pyebaek": "폐백",
-        "A.banquet": "연회",
-        "A.secondPart": "2부",
-        "D.partner": "짝궁 -2",
-        "D.earlybird": "얼리버드(예식 1년 전 예약) -1",
-        "D.review": "계약 또는 촬영후기 -2",
-        "D.sunday": "일요일예식 -1",
-        "D.evening": "저녁예식(오후 4시 이후) -1"
+        "F.snsHighlight": "SNS용 1분 H/L (세로형)",
+        "F.subVideoDirector": "서브 영상감독 추가",
+        "F.videoDesignated": "감독 지정",
+        "F.videoDirector": "대표감독 지정",
+        "F.usb": "USB추가",
+        "S.iphoneSnap": "아이폰스냅 추가",
+        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가",
+        "S.subSnap": "서브스냅 추가",
+        "S.snapDesignated": "작가 지정",
+        "S.snapDirector": "대표작가 지정",
+        "D.partner": "짝궁",
+        "D.earlybird": "얼리버드(예식 1년 전 예약)",
+        "D.review": "계약 또는 촬영후기",
+        "D.sunday": "일요일예식",
+        "D.evening": "저녁예식(오후 4시 이후)"
     }
 
     film_prices = {"클래식": 60, "시그니처": 75, "노블레스": 99, "선택안함": 0}
@@ -105,7 +92,6 @@ def calculate_price_with_korean_labels(
 
     snap_opts = map_nums(snapOptions, snap_option_map)
     film_opts = map_nums(filmOptions, film_option_map)
-    adds = map_nums(additionalShoot, additional_map)
     discounts = map_nums(discountEvent, discount_map)
 
     snap_base = snap_prices.get(snapProduct, 0)
@@ -119,22 +105,6 @@ def calculate_price_with_korean_labels(
     total = product_total
     total += sum(snap_option_prices.get(opt, 0) for opt in snap_opts)
     total += sum(film_option_prices.get(opt, 0) for opt in film_opts)
-
-    # 📱 아이폰스냅 자동 무료
-    if snapProduct in ["시그니처", "노블레스"] and filmProduct in ["시그니처", "노블레스"]:
-        if "S.iphoneSnap" in snap_opts:
-            total -= snap_option_prices.get("S.iphoneSnap", 0)
-
-    # 📸 추가촬영 비용 조건
-    if snapProduct == "노블레스" and filmProduct == "노블레스":
-        add_total = 0
-    elif snapProduct != "선택안함" and filmProduct != "선택안함":
-        add_total = len(adds) * 20
-    elif snapProduct != "선택안함" or filmProduct != "선택안함":
-        add_total = len(adds) * 10
-    else:
-        add_total = 0
-    total += add_total
 
     # 🎉 기타 할인
     for d in discounts:
@@ -155,7 +125,6 @@ def calculate_price_with_korean_labels(
 [스냅상품] {snapProduct}
 [스냅옵션] {label(snap_opts)}
 
-[추가촬영] {label(adds)}
 [할인이벤트] {label(discounts)}
 
 [금액] {total_price:,}원
@@ -171,19 +140,27 @@ def calculate_price_with_korean_labels(
 @app.route("/calculator", methods=["POST"])
 def calculator():
     try:
-        data = request.get_json()
+        # 1. 파라미터 안전하게 추출
+        data = request.get_json(force=True)
         params = data.get("action", {}).get("params", {})
 
+        snap_product = params.get("snapProduct", "선택안함")
+        snap_options = params.get("snapOptions", "")
+        film_product = params.get("filmProduct", "선택안함")
+        film_options = params.get("filmOptions", "")
+        discount_event = params.get("discountEvent", "")
+
+        # 2. 가격 계산 함수 호출
         result = calculate_price_with_korean_labels(
-            snapProduct=params.get("snapProduct", "선택안함"),
-            snapOptions=params.get("snapOptions", ""),
-            filmProduct=params.get("filmProduct", "선택안함"),
-            filmOptions=params.get("filmOptions", ""),
-            additionalShoot=params.get("additionalShoot", ""),
-            discountEvent=params.get("discountEvent", "")
+            snapProduct=snap_product,
+            snapOptions=snap_options,
+            filmProduct=film_product,
+            filmOptions=film_options,
+            discountEvent=discount_event
         )
 
-        response = {
+        # 3. 성공 응답 구성
+        response_body = {
             "version": "2.0",
             "template": {
                 "outputs": [
@@ -202,24 +179,33 @@ def calculator():
         }
 
         return make_response(
-            json.dumps(response, ensure_ascii=False),
+            json.dumps(response_body, ensure_ascii=False),
             200,
             {"Content-Type": "application/json"}
         )
 
     except Exception as e:
-        return jsonify({
+        # 4. 에러 응답 구성
+        error_response = {
             "version": "2.0",
             "template": {
                 "outputs": [
                     {
                         "simpleText": {
-                            "text": f"⚠️ 계산 중 오류 발생: {str(e)}"
+                            "text": f"⚠️ 견적 계산 중 오류가 발생했어요. 다시 시도해 주세요."
                         }
                     }
                 ]
+            },
+            "data": {
+                "error": str(e)
             }
-        })
+        }
+        return make_response(
+            json.dumps(error_response, ensure_ascii=False),
+            200,
+            {"Content-Type": "application/json"}
+        )
 
 
 # ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
@@ -240,13 +226,6 @@ def parse_korean_date(text):
     return parse(cleaned, fuzzy=True)
 
 # ✅ 날짜 파싱 + GAS 예약 확인 통합
-from flask import Flask, request, make_response, jsonify
-import requests
-import json
-from dateutil.parser import parse
-
-app = Flask(__name__)
-
 @app.route("/parse-and-check", methods=["POST"])
 def parse_and_check():
     try:

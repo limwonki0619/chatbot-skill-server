@@ -240,60 +240,57 @@ def parse_korean_date(text):
     return parse(cleaned, fuzzy=True)
 
 # ✅ 날짜 파싱 + GAS 예약 확인 통합
-@app.route('/parse-and-check', methods=['POST'])
+@app.route("/parse-and-check", methods=["POST"])
 def parse_and_check():
     try:
         data = request.get_json()
-        raw_input = data.get("action", {}).get("params", {}).get("Weddingday")
+        raw_input = data.get("action", {}).get("params", {}).get("Weddingday", "")
+        is_admin = raw_input.startswith("!")
+        clean_input = raw_input.lstrip("!").strip()
 
-        if not raw_input:
-            raise ValueError("사용자 입력값(Weddingday)이 없습니다.")
+        # 날짜 파싱
+        parsed = parse(clean_input, fuzzy=True)
+        year = parsed.strftime("%Y")
+        date = parsed.strftime("%Y-%m-%d")
+        pretty_date = parsed.strftime("%Y년 %m월 %d일")
 
-        # ⏳ 파싱 보완
-        parsed_dt = parse_korean_date(raw_input)
-        year = parsed_dt.strftime("%Y")
-        date_only = parsed_dt.strftime("%Y-%m-%d")
-
-        # GAS 웹앱 URL (너의 실제 스크립트 ID로 대체할 것!)
-        GAS_URL = "https://script.google.com/macros/s/AKfycbz2vcWjotUE59P8A3EDzFG_0Wk6Q1r65rkek19o3whWfIDZiGafItPpZDQbINWKO15wZw/exec"
-    
-        res = requests.post(GAS_URL, json={"year": year, "date": date_only}, timeout=5)
-
-        if res.status_code != 200:
-            raise Exception("GAS 응답 오류")
-
+        # GAS 요청
+        gas_url = "https://script.google.com/macros/s/AKfyc.../exec"  # 네 GAS URL로 대체
+        res = requests.post(gas_url, json={"year": year, "date": date})
         result = res.json()
-        count = result.get("foundCount", 0)
-        sheet_exists = result.get("sheetExists", True)
 
-        # 💬 응답 메시지 구성
+        found = result.get("foundCount", 0)
+        sheet_exists = result.get("sheetExists", False)
+
+        # 응답 구성
         if not sheet_exists:
-            message = f"{date_only}은 예약 가능합니다. (해당 연도 시트 없음)"
-        elif count < 10:
-            message = f"{date_only}은 예약 가능합니다. ({count}건 등록됨)"
+            message = f"{pretty_date}은 예약 가능합니다."
+        elif is_admin:
+            message = f"{pretty_date}은 예약 {found}건 등록되어 있습니다."
+        elif found >= 10:
+            message = f"{pretty_date}은 예약이 많은 날짜예요. 정확한 가능 여부는 상담 후 안내드릴 수 있어요."
         else:
-            message = f"{date_only}은 현재 {count}건 등록되어 있습니다.\n상담원과 상의가 필요합니다."
+            message = f"{pretty_date}은 예약 가능합니다."
 
-        return jsonify({
+        return make_response(json.dumps({
             "version": "2.0",
             "template": {
                 "outputs": [
-                    {"simpleText": {"text": message}}
+                    { "simpleText": { "text": message } }
                 ]
             },
             "data": {
-                "reservationDate": date_only,
-                "reservationCount": count,
-                "status": "예약 가능" if count < 10 else "상담 필요"
+                "mode": "admin" if is_admin else "user",
+                "count": found
             }
-        })
+        }, ensure_ascii=False), 200, {"Content-Type": "application/json"})
 
     except Exception as e:
         return jsonify({
             "version": "2.0",
             "template": {
                 "outputs": [
-                    {"simpleText": {"text": f"❗ 오류 발생: {str(e)}"}}
+                    { "simpleText": { "text": f"❌ 오류 발생: {str(e)}" } }
                 ]
             }
         })

@@ -235,29 +235,36 @@ def parse_and_check():
         parsed_dt = parse(clean_input, fuzzy=True)
         year = parsed_dt.strftime("%Y")
         date_str = parsed_dt.strftime("%Y-%m-%d")
-
-        # 날짜만 포맷
         pretty_date = parsed_dt.strftime("%Y년 %m월 %d일")
 
-        # 3. GAS 요청
-        gas_url = "https://script.google.com/macros/s/AKfycbz2vcWjotUE59P8A3EDzFG_0Wk6Q1r65rkek19o3whWfIDZiGafItPpZDQbINWKO15wZw/exec"  # 실제 GAS URL로 대체
+        # 3. GAS 서버에 요청
+        gas_url = "https://script.google.com/macros/s/AKfycbwgjfl-RFHGMAS-VF5-asFwhG34fElcsq7vJRVDrepl_NXYipmJdvg-1-khgb3vwHVn2w/exec"
         gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
         gas_result = gas_response.json()
 
         found = gas_result.get("foundCount", 0)
         sheet_exists = gas_result.get("sheetExists", False)
+        details = gas_result.get("details", [])
 
         # 4. 응답 메시지 생성
         if not sheet_exists:
-            message = f"{pretty_date}은 예약 가능합니다. (해당 연도 시트 없음)"
+            message = f"{pretty_date}은 예약 가능합니다."
         elif is_admin:
-            message = f"{pretty_date}은 예약 {found}건 등록되어 있습니다."
+            if found == 0:
+                message = f"{pretty_date}은 등록된 예약이 없습니다."
+            else:
+                detail_lines = [
+                    f"{i+1}. {d.get('time', '시간 없음')} / {d.get('hall', '웨딩홀 정보 없음')}"
+                    for i, d in enumerate(details)
+                ]
+                detail_text = "\n".join(detail_lines)
+                message = f"{pretty_date}은 총 {found}건 등록되어 있습니다.\n\n{detail_text}"
         elif found >= 10:
-            message = f"{pretty_date}은 예약이 많아 먼저 상담 후 가능 여부를 안내드릴게요."
+            message = f"{pretty_date}은 현재 해당 날짜에는 예약이 몰려 있어 상담 후 가능 여부를 안내드리고 있어요."
         else:
             message = f"{pretty_date}은 예약 가능합니다."
 
-        # 5. 챗봇 응답 포맷
+        # 5. 챗봇 응답
         response = {
             "version": "2.0",
             "template": {
@@ -268,7 +275,8 @@ def parse_and_check():
             "data": {
                 "mode": "admin" if is_admin else "user",
                 "date": date_str,
-                "foundCount": found
+                "foundCount": found,
+                "details": details
             }
         }
 
@@ -285,6 +293,7 @@ def parse_and_check():
                 ]
             }
         })
+
 
 
 # 포트 설정

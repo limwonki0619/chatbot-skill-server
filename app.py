@@ -255,7 +255,7 @@ def parse_and_check():
         pretty_date = parsed.strftime("%Y년 %m월 %d일")
 
         # GAS 요청
-        gas_url = "https://script.google.com/macros/s/AKfyc.../exec"  # 네 GAS URL로 대체
+        gas_url = "https://script.google.com/macros/s/AKfycbz2vcWjotUE59P8A3EDzFG_0Wk6Q1r65rkek19o3whWfIDZiGafItPpZDQbINWKO15wZw/exec"  # 네 GAS URL로 대체
         res = requests.post(gas_url, json={"year": year, "date": date})
         result = res.json()
 

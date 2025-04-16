@@ -241,25 +241,51 @@ def parse_korean_date(text):
 
 
 # ✅ 날짜 파싱 + GAS 예약 확인 통합
+# ✅ 한글 날짜 입력 보정 함수
+def parse_korean_date(text):
+    text = text.lstrip('!').strip()
+
+    # 25년 → 2025년 처리
+    text = re.sub(r'\b(\d{2})년', lambda m: f"20{m.group(1)}년", text)
+
+    # 오전/오후 시각 보정
+    if '오후' in text:
+        match = re.search(r'오후\s*(\d{1,2})시', text)
+        if match:
+            hour = int(match.group(1))
+            hour = 12 if hour == 12 else hour + 12
+            text = text.replace(match.group(0), f"{hour}시")
+    elif '오전' in text:
+        match = re.search(r'오전\s*(\d{1,2})시', text)
+        if match:
+            hour = int(match.group(1))
+            hour = 0 if hour == 12 else hour
+            text = text.replace(match.group(0), f"{hour}시")
+
+    # 특수문자 및 단위 제거
+    text = text.replace('.', ' ').replace('/', ' ')
+    text = re.sub(r'[^\d\s시]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    return parse(text, fuzzy=True)
+
+# ✅ 날짜 확인 엔드포인트
 @app.route("/parse-and-check", methods=["POST"])
 def parse_and_check():
     try:
-        # 1. 사용자 입력값 파싱
         data = request.get_json()
         raw_input = data.get("action", {}).get("params", {}).get("Weddingday", "")
         is_admin = raw_input.startswith("!")
         clean_input = raw_input.lstrip("!").strip()
 
-        # 2. 날짜 파싱 (문자열 보정 포함한 함수로 대체)
+        # 보정된 날짜 파싱
         parsed_dt = parse_korean_date(clean_input)
-
-        # 3. 날짜 포맷 처리
         year = parsed_dt.strftime("%Y")
         date_str = parsed_dt.strftime("%Y-%m-%d")
         pretty_date = parsed_dt.strftime("%Y년 %m월 %d일")
 
-        # 3. GAS 서버에 요청
-        gas_url = os.getenv("GAS_URL")
+        # GAS 서버 요청
+        gas_url = os.getenv("GAS_URL")  # 반드시 .env 파일에 GAS_URL 설정 필요
         gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
         gas_result = gas_response.json()
 
@@ -267,25 +293,22 @@ def parse_and_check():
         sheet_exists = gas_result.get("sheetExists", False)
         details = gas_result.get("details", [])
 
-        # 4. 응답 메시지 생성
+        # 응답 메시지 생성
         if not sheet_exists:
-            message = f"{pretty_date}은 예약 가능합니다."
+            message = f"{pretty_date}은 예약 가능합니다. (해당 연도 시트 없음)"
         elif is_admin:
-            if found == 0:
-                message = f"{pretty_date}은 등록된 예약이 없습니다."
+            if found > 0 and details:
+                detail_lines = [f"{row.get('time', '')} - {row.get('hall', '')}" for row in details]
+                joined = "\n".join(detail_lines)
+                message = f"{pretty_date}은 예약 {found}건 등록되어 있습니다.\n\n📋 등록 내역:\n{joined}"
             else:
-                detail_lines = [
-                    f"{i+1}. {d.get('time', '시간 없음')} / {d.get('hall', '웨딩홀 정보 없음')}"
-                    for i, d in enumerate(details)
-                ]
-                detail_text = "\n".join(detail_lines)
-                message = f"{pretty_date}은 \n 총 {found}건 등록되어 있습니다.\n\n{detail_text}"
+                message = f"{pretty_date}은 등록된 예약이 없습니다."
         elif found >= 10:
-            message = f"{pretty_date}은 현재 해당 날짜에는 예약이 몰려 있어 상담 후 가능 여부를 안내드리고 있어요."
+            message = f"{pretty_date}은 예약이 많아 상담 후 예약 가능 여부를 안내드릴게요."
         else:
             message = f"{pretty_date}은 예약 가능합니다."
 
-        # 5. 챗봇 응답
+        # 챗봇 응답 반환
         response = {
             "version": "2.0",
             "template": {
@@ -296,8 +319,7 @@ def parse_and_check():
             "data": {
                 "mode": "admin" if is_admin else "user",
                 "date": date_str,
-                "foundCount": found,
-                "details": details
+                "foundCount": found
             }
         }
 
@@ -314,8 +336,6 @@ def parse_and_check():
                 ]
             }
         })
-
-
 
 # 포트 설정
 if __name__ == '__main__':

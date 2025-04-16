@@ -215,6 +215,15 @@ def normalize_year(text):
 
 # ✅ 한국어 날짜 문자열을 안전하게 파싱
 def safe_parse_korean_date(text):
+    # ✅ "25년" → "2025년" 보정 (4자리 연도는 그대로 둠)
+    def replace_short_year(m):
+        year_str = m.group(1)
+        if len(year_str) == 2:
+            return f"20{year_str}년" if int(year_str) < 30 else f"19{year_str}년"
+        return f"{year_str}년"  # 4자리 연도 그대로 유지
+
+    text = re.sub(r"(\d{2,4})년", replace_short_year, text)
+
     # ✅ 오전/오후 처리
     if '오후' in text and re.search(r'\d+시', text):
         hour = int(re.search(r'(\d+)시', text).group(1))
@@ -222,14 +231,10 @@ def safe_parse_korean_date(text):
             text = text.replace(f'{hour}시', f'{hour + 12}시')
     text = text.replace('오전', '').replace('오후', '')
 
-    # ✅ "25년" → "2025년" 보정
-    text = re.sub(r"(\d{2})년", lambda m: f"20{m.group(1)}년" if int(m.group(1)) < 30 else f"19{m.group(1)}년", text)
-
-    # ✅ 날짜만 정리 (불필요한 기호 제거)
+    # ✅ 날짜 포맷 정리
     cleaned = re.sub(r'[^0-9년월일시분]', ' ', text)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
 
-    # ✅ datetime 파싱
     return parse(cleaned, fuzzy=True)
 
 @app.route("/parse-and-check", methods=["POST"])

@@ -250,8 +250,10 @@ def parse_and_check():
         is_admin = raw_input.startswith("!")
         clean_input = raw_input.lstrip("!").strip()
 
-        # 2. 날짜 파싱
-        parsed_dt = parse(clean_input, fuzzy=True)
+        # 2. 날짜 파싱 (문자열 보정 포함한 함수로 대체)
+        parsed_dt = parse_korean_date(clean_input)
+
+        # 3. 날짜 포맷 처리
         year = parsed_dt.strftime("%Y")
         date_str = parsed_dt.strftime("%Y-%m-%d")
         pretty_date = parsed_dt.strftime("%Y년 %m월 %d일")

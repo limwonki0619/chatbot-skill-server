@@ -209,61 +209,37 @@ def calculator():
         })
 
 
-# ✅ 연도 보정: '25년' → '2025년'
-def normalize_year(text):
-    return re.sub(r'\b(\d{2})년\b', r'20\1년', text)
-
-# ✅ 한국어 날짜 문자열을 안전하게 파싱
-def safe_parse_korean_date(text):
-    # ✅ "25년" → "2025년" 보정 (4자리 연도는 그대로 둠)
-    def replace_short_year(m):
-        year_str = m.group(1)
-        if len(year_str) == 2:
-            return f"20{year_str}년" if int(year_str) < 30 else f"19{year_str}년"
-        return f"{year_str}년"  # 4자리 연도 그대로 유지
-
-    text = re.sub(r"(\d{2,4})년", replace_short_year, text)
-
-    # ✅ 오전/오후 처리
+# ✅ 한국어 날짜 파싱 (예: 2025-06-14 오후 2시, 2025.6.14. 오후 2시 등)
+def parse_korean_date(text):
+    # 오후 처리
     if '오후' in text and re.search(r'\d+시', text):
         hour = int(re.search(r'(\d+)시', text).group(1))
         if 1 <= hour < 12:
             text = text.replace(f'{hour}시', f'{hour + 12}시')
-    text = text.replace('오전', '').replace('오후', '')
+    text = text.replace('오전', '')
+    text = text.replace('오후', '')
 
-    # ✅ 날짜 포맷 정리
-    cleaned = re.sub(r'[^0-9년월일시분]', ' ', text)
+    # 불필요한 기호 제거
+    cleaned = re.sub(r'[^\d]', ' ', text)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-
     return parse(cleaned, fuzzy=True)
 
-@app.route("/parse-and-check2", methods=["POST"])
-def parse_and_check2():
+@app.route("/parse-and-check", methods=["POST"])
+def parse_and_check():
     try:
-        # 1. 사용자 입력값 수신
+        # 1. 사용자 입력 파싱
         data = request.get_json()
         raw_input = data.get("action", {}).get("params", {}).get("Weddingday", "")
         is_admin = raw_input.startswith("!")
         original_input = raw_input.strip()
         clean_input = raw_input.lstrip("!").strip()
 
-        # 2. 날짜 파싱 (오전/오후 및 연도 보정 포함)
-        def safe_parse_korean_date(text):
-            if '오후' in text and re.search(r'\d+시', text):
-                hour = int(re.search(r'(\d+)시', text).group(1))
-                if 1 <= hour < 12:
-                    text = text.replace(f'{hour}시', f'{hour + 12}시')
-            text = text.replace('오전', '').replace('오후', '')
-            text = re.sub(r"(\d{2})년", lambda m: f"20{m.group(1)}년" if int(m.group(1)) < 30 else f"19{m.group(1)}년", text)
-            cleaned = re.sub(r'[^0-9년월일시분]', ' ', text)
-            cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-            return parse(cleaned, fuzzy=True)
-
-        parsed_dt = safe_parse_korean_date(clean_input)
+        # 2. 날짜 파싱
+        parsed_dt = parse_korean_date(clean_input)
         year = parsed_dt.strftime("%Y")
         date_str = parsed_dt.strftime("%Y-%m-%d")
 
-        # 3. GAS 서버에 요청
+        # 3. GAS 서버로 요청
         gas_url = os.getenv("GAS_URL")
         gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
         gas_result = gas_response.json()
@@ -282,11 +258,11 @@ def parse_and_check2():
                 detail_lines = "\n".join([f"- {d.get('time', '')} / {d.get('hall', '')}" for d in details])
                 message = f"{original_input}은 {found}건 등록되어 있습니다:\n{detail_lines}"
         elif found >= 10:
-            message = f"{original_input}은 예약 건수가 많아, 상담 후 가능 여부를 안내드릴게요."
+            message = f"{original_input}은 예약 건수가 많아, 상담 후 안내드릴게요."
         else:
             message = f"{original_input}은 예약 가능합니다."
 
-        # 5. 챗봇 응답 포맷
+        # 5. 응답 포맷 반환
         response = {
             "version": "2.0",
             "template": {
@@ -314,7 +290,6 @@ def parse_and_check2():
                 ]
             }
         })
-
 
 # 포트 설정
 if __name__ == '__main__':

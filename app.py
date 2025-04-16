@@ -4,6 +4,10 @@ import os
 import requests
 import re
 from dateutil.parser import parse
+from dotenv import load_dotenv
+from datetime import datetime
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -207,19 +211,34 @@ def calculator():
 # ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
 # ✅ 한국어 날짜 문자열 보정 함수
 def parse_korean_date(text):
-    # 오전/오후 처리
-    if '오후' in text and re.search(r'\d+시', text):
-        hour_match = re.search(r'(\d+)시', text)
-        if hour_match:
-            hour = int(hour_match.group(1))
-            # 오후 12시는 그대로, 오후 1시~11시는 +12
-            if 1 <= hour < 12:
-                text = text.replace(f'{hour}시', f'{hour + 12}시')
-    text = text.replace('오전', '').replace('오후', '')
+    # 1. 느낌표 제거 (관리자모드 구분 외에는 영향 없음)
+    text = text.lstrip('!').strip()
 
-    # 숫자만 남기고 나머지는 공백 처리
-    cleaned = re.sub(r'[^\d]', ' ', text)  # 예: "2025년 2월 25일 14시" → "2025 2 25 14"
-    return parse(cleaned, fuzzy=True)
+    # 2. '25년' → '2025년' 으로 보정
+    text = re.sub(r'\b(\d{2})년', lambda m: f"20{m.group(1)}년", text)
+
+    # 3. 오후/오전 시간 → 24시간 보정
+    if '오후' in text:
+        match = re.search(r'오후\s*(\d{1,2})시', text)
+        if match:
+            hour = int(match.group(1))
+            hour = 12 if hour == 12 else hour + 12
+            text = text.replace(match.group(0), f"{hour}시")
+    elif '오전' in text:
+        match = re.search(r'오전\s*(\d{1,2})시', text)
+        if match:
+            hour = int(match.group(1))
+            hour = 0 if hour == 12 else hour
+            text = text.replace(match.group(0), f"{hour}시")
+
+    # 4. 특수문자 제거 (년/월/일/시 제외), 점이나 슬래시도 띄어쓰기로 바꿈
+    text = text.replace('.', ' ').replace('/', ' ')
+    text = re.sub(r'[^\d\s시]', ' ', text)  # '2025 6 1 14시' 형태 유도
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    # 5. 파싱
+    return parse(text, fuzzy=True)
+
 
 # ✅ 날짜 파싱 + GAS 예약 확인 통합
 @app.route("/parse-and-check", methods=["POST"])
@@ -238,7 +257,7 @@ def parse_and_check():
         pretty_date = parsed_dt.strftime("%Y년 %m월 %d일")
 
         # 3. GAS 서버에 요청
-        gas_url = "https://script.google.com/macros/s/AKfycbwgjfl-RFHGMAS-VF5-asFwhG34fElcsq7vJRVDrepl_NXYipmJdvg-1-khgb3vwHVn2w/exec"
+        gas_url = os.getenv("GAS_URL")
         gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
         gas_result = gas_response.json()
 
@@ -258,7 +277,7 @@ def parse_and_check():
                     for i, d in enumerate(details)
                 ]
                 detail_text = "\n".join(detail_lines)
-                message = f"{pretty_date}은 총 {found}건 등록되어 있습니다.\n\n{detail_text}"
+                message = f"{pretty_date}은 \n 총 {found}건 등록되어 있습니다.\n\n{detail_text}"
         elif found >= 10:
             message = f"{pretty_date}은 현재 해당 날짜에는 예약이 몰려 있어 상담 후 가능 여부를 안내드리고 있어요."
         else:

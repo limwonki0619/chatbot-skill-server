@@ -260,7 +260,7 @@ def parse_and_check():
             ])
             message = f"{original_input} 예약은 총 {found}건 등록되어 있습니다:\n{detail_lines}"
         elif found >= 10:
-          message = f"{original_input} 예약이 많아아, 상담 후 가능 여부를 안내드릴게요."
+          message = f"{original_input} 예약이 많아, 상담 후 가능 여부를 안내드릴게요."
         else:
           message = f"{original_input} 예약은 가능합니다."
 

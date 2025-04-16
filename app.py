@@ -136,17 +136,18 @@ def calculate_price_with_korean_labels(
     summary = f"""요청해주신 구성으로 견적 안내드릴게요 :)
 
 🎬 [영상상품] {filmProduct}
-🔶 [영상옵션] {label(film_opts)}
+💙 [영상옵션] {label(film_opts)}
 
 📷 [스냅상품] {snapProduct}
-🔷 [스냅옵션] {label(snap_opts)}
+❤️ [스냅옵션] {label(snap_opts)}
 
 🎁 [할인이벤트] {label(discounts)}
 
-💰 [금액] {total_price:,}원
+💰 [총금액] {total_price:,}원
 
 ※ 대전/세종/청주 이외 지역은 출장비가 발생 됩니다.
-※ 원판, 연회, 폐백, 2부 촬영에 대한 자세한 내용은 상담을 통해 안내드릴게요!
+※ 원판, 연회, 폐백, 2부 촬영에 관한 문의는 상담을 통해 안내드릴게요!
+※ ⚠️원하시는 구성으로 **상담채팅 넘어가기** 버튼을 누른 후 내용을 남겨주셔야 이후 원활한 상담이 가능합니다!😊
 """
 
     return {
@@ -252,19 +253,26 @@ def parse_and_check():
 
         # 4. 응답 메시지 생성
         if not sheet_exists:
-          message = f"{original_input} 예약은 가능합니다."
+            message = (
+                f"{original_input}은 예약 가능한 일정이에요!\n"
+                f"원하시는 구성과 가격은 **셀프 견적 계산기**에서 확인하실 수 있어요😊"
+            )
         elif is_admin:
-          if found == 0:
-            message = f"{original_input} 예약은 등록된 내역이 없습니다."
-          else:
-            detail_lines = "\n".join([
-              f"- {d.get('time', '')} / {d.get('hall', '')}" for d in details
-            ])
-            message = f"{original_input} 예약은 총 {found}건 등록되어 있습니다:\n{detail_lines}"
+            if found == 0:
+                message = f"{original_input} 예약은 등록된 내역이 없습니다."
+            else:
+                detail_lines = "\n".join([
+                    f"- {d.get('time', '')} / {d.get('hall', '')}" for d in details
+                ])
+                message = f"{original_input} 예약은 총 {found}건 등록되어 있습니다:\n{detail_lines}"
         elif found >= 10:
-          message = f"{original_input} 예약이 많아, 상담 후 가능 여부를 안내드릴게요."
+            message = f"{original_input}은 예약이 많은 날이에요. 상담을 통해 가능 여부를 확인해드릴게요!"
         else:
-          message = f"{original_input} 예약은 가능합니다."
+            message = (
+                f"{original_input}은 예약 가능한 일정이에요!\n"
+                f"원하시는 구성과 가격은 **셀프 견적 계산기**에서 확인하실 수 있어요😊"
+            )
+
 
         # 5. 응답 포맷 반환
         response = {

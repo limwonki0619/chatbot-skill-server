@@ -250,17 +250,19 @@ def parse_and_check():
 
         # 4. 응답 메시지 생성
         if not sheet_exists:
-            message = f"{original_input}은 예약 가능합니다. (해당 연도 시트 없음)"
+          message = f"{original_input} 예약은 가능합니다."
         elif is_admin:
-            if found == 0:
-                message = f"{original_input}은 등록된 예약이 없습니다."
-            else:
-                detail_lines = "\n".join([f"- {d.get('time', '')} / {d.get('hall', '')}" for d in details])
-                message = f"{original_input}은 {found}건 등록되어 있습니다:\n{detail_lines}"
+          if found == 0:
+            message = f"{original_input} 예약은 등록된 내역이 없습니다."
+          else:
+            detail_lines = "\n".join([
+              f"- {d.get('time', '')} / {d.get('hall', '')}" for d in details
+            ])
+            message = f"{original_input} 예약은 총 {found}건 등록되어 있습니다:\n{detail_lines}"
         elif found >= 10:
-            message = f"{original_input}은 예약 건수가 많아, 상담 후 안내드릴게요."
+          message = f"{original_input} 예약이 많아아, 상담 후 가능 여부를 안내드릴게요."
         else:
-            message = f"{original_input}은 예약 가능합니다."
+          message = f"{original_input} 예약은 가능합니다."
 
         # 5. 응답 포맷 반환
         response = {

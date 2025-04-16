@@ -208,56 +208,37 @@ def calculator():
             }
         })
 
-# ✅ 새로운 기능: 자연어 날짜 파싱 + 예약 여부 체크
-# ✅ 한국어 날짜 문자열 보정 함수
-def parse_korean_date(text):
-    # 1. 느낌표 제거 (관리자모드 구분 외에는 영향 없음)
-    text = text.lstrip('!').strip()
 
-    # 2. '25년' → '2025년' 으로 보정
-    text = re.sub(r'\b(\d{2})년', lambda m: f"20{m.group(1)}년", text)
+# ✅ 연도 보정: '25년' → '2025년'
+def normalize_year(text):
+    return re.sub(r'\b(\d{2})년\b', r'20\1년', text)
 
-    # 3. 오후/오전 시간 → 24시간 보정
-    if '오후' in text:
-        match = re.search(r'오후\s*(\d{1,2})시', text)
-        if match:
-            hour = int(match.group(1))
-            hour = 12 if hour == 12 else hour + 12
-            text = text.replace(match.group(0), f"{hour}시")
-    elif '오전' in text:
-        match = re.search(r'오전\s*(\d{1,2})시', text)
-        if match:
-            hour = int(match.group(1))
-            hour = 0 if hour == 12 else hour
-            text = text.replace(match.group(0), f"{hour}시")
+# ✅ 한국어 날짜 문자열을 안전하게 파싱
+def safe_parse_korean_date(text):
+    text = normalize_year(text)
 
-    # 4. 특수문자 제거 (년/월/일/시 제외), 점이나 슬래시도 띄어쓰기로 바꿈
-    text = text.replace('.', ' ').replace('/', ' ')
-    text = re.sub(r'[^\d\s시]', ' ', text)  # '2025 6 1 14시' 형태 유도
+    text = text.replace('오전', 'AM').replace('오후', 'PM')
+    text = text.replace('.', ' ').replace('년', '-').replace('월', '-').replace('일', '')
     text = re.sub(r'\s+', ' ', text).strip()
 
-    # 5. 파싱
-    return parse(text, fuzzy=True)
+    return parse(text, fuzzy=False)
 
-
-# ✅ 날짜 파싱 + GAS 예약 확인 통합
-# ✅ 한글 날짜 입력 보정 함수
 @app.route("/parse-and-check", methods=["POST"])
 def parse_and_check():
     try:
+        # 1. 사용자 입력값 파싱
         data = request.get_json()
         raw_input = data.get("action", {}).get("params", {}).get("Weddingday", "")
         is_admin = raw_input.startswith("!")
         clean_input = raw_input.lstrip("!").strip()
 
-        original_input = clean_input  # 👉 사용자 입력을 그대로 저장
-
-        # 날짜 파싱
-        parsed_dt = parse_korean_date(clean_input)
+        # 2. 날짜 파싱
+        parsed_dt = safe_parse_korean_date(clean_input)
         year = parsed_dt.strftime("%Y")
         date_str = parsed_dt.strftime("%Y-%m-%d")
+        pretty_date = parsed_dt.strftime("%Y년 %m월 %d일 %p %I시").replace("AM", "오전").replace("PM", "오후")
 
-        # GAS 요청
+        # 3. GAS 요청
         gas_url = os.getenv("GAS_URL")
         gas_response = requests.post(gas_url, json={"year": year, "date": date_str})
         gas_result = gas_response.json()
@@ -266,21 +247,22 @@ def parse_and_check():
         sheet_exists = gas_result.get("sheetExists", False)
         details = gas_result.get("details", [])
 
-        # 응답 메시지
+        # 4. 메시지 생성
         if not sheet_exists:
-            message = f"{original_input}은 예약 가능합니다. (해당 연도 시트 없음)"
+            message = f"{pretty_date}은 예약 가능합니다. (해당 연도 시트 없음)"
         elif is_admin:
-            if found > 0 and details:
-                detail_lines = [f"{row.get('time', '')} - {row.get('hall', '')}" for row in details]
-                joined = "\n".join(detail_lines)
-                message = f"{original_input}은 예약 {found}건 등록되어 있습니다.\n\n📋 등록 내역:\n{joined}"
+            if not details:
+                message = f"{pretty_date}은 예약 {found}건 등록되어 있습니다."
             else:
-                message = f"{original_input}은 등록된 예약이 없습니다."
+                detail_lines = [f"- {row.get('time', '시간정보없음')} / {row.get('hall', '홀정보없음')}" for row in details]
+                joined = "\n".join(detail_lines)
+                message = f"{pretty_date}은 총 {found}건 등록되어 있습니다:\n{joined}"
         elif found >= 10:
-            message = f"{original_input}은 예약이 많아 상담 후 예약 가능 여부를 안내드릴게요."
+            message = f"{pretty_date}은 예약이 몰려 있어, 상담 후 예약 가능 여부를 안내드릴게요."
         else:
-            message = f"{original_input}은 예약 가능합니다."
+            message = f"{pretty_date}은 예약 가능합니다."
 
+        # 5. 응답
         response = {
             "version": "2.0",
             "template": {

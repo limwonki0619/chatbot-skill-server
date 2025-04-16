@@ -43,7 +43,8 @@ def calculate_price_with_korean_labels(
         "2": "D.earlybird",
         "3": "D.review",
         "4": "D.sunday",
-        "5": "D.evening"
+        "5": "D.evening",
+        "6": "D.prepay"
     }
 
     label_map = {
@@ -61,7 +62,8 @@ def calculate_price_with_korean_labels(
         "D.earlybird": "얼리버드(예식 1년 전 예약)",
         "D.review": "계약 또는 촬영후기",
         "D.sunday": "일요일예식",
-        "D.evening": "저녁예식(오후 4시 이후)"
+        "D.evening": "저녁예식(오후 4시 이후)",
+        "D.prepay": "선결제"
     }
 
     film_prices = {"클래식": 60, "시그니처": 75, "노블레스": 99, "선택안함": 0}
@@ -88,7 +90,8 @@ def calculate_price_with_korean_labels(
         "D.earlybird": 1,
         "D.review": 2,
         "D.sunday": 1,
-        "D.evening": 1
+        "D.evening": 1,
+        "D.prepay": 5
     }
 
     # ✅ 문자열 숫자 → 매핑 함수 (공백 제거 포함)
@@ -141,10 +144,9 @@ def calculate_price_with_korean_labels(
 🎁 [할인이벤트] {label(discounts)}
 
 💰 [금액] {total_price:,}원
-✔️ [부가세(10%)] {vat:,}원
 
 ※ 대전/세종/청주 이외 지역은 출장비가 발생 됩니다.
-※ 원판, 연회, 폐백, 2부 촬영에 대한 자세한 내용은 상담을 통해 안내드립니다.
+※ 원판, 연회, 폐백, 2부 촬영에 대한 자세한 내용은 상담을 통해 안내드릴게요!
 """
 
     return {

@@ -238,7 +238,7 @@ def safe_parse_korean_date(text):
     return parse(cleaned, fuzzy=True)
 
 @app.route("/parse-and-check2", methods=["POST"])
-def parse_and_check():
+def parse_and_check2():
     try:
         # 1. 사용자 입력값 수신
         data = request.get_json()

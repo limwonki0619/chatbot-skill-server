@@ -135,7 +135,7 @@ def calculate_price_with_korean_labels(
     vat = int(total_price * 0.1)
 
     def label(items):
-        return "없음" if not items else "\n" + "\n".join(f"{label_map.get(i, i)}" for i in items)
+        return "없음" if not items else "\n" + "\n".join(f"- {label_map.get(i, i)}" for i in items)
 
 
     summary = f"""요청해주신 구성으로 견적 안내드릴게요 :)

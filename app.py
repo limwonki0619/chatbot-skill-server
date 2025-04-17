@@ -95,12 +95,16 @@ def calculate_price_with_korean_labels(
     }
 
     # ✅ 문자열 숫자 → 매핑 함수 (공백 제거 포함)
-    def map_nums(nums, table):
-        return [
-            table[n.strip()]
-            for n in nums.split(",")
-            if n.strip() in table and table[n.strip()] is not None
-        ] if nums else []
+def map_nums(nums, table):
+    if not nums:
+        return []
+    if isinstance(nums, list):
+        nums = ",".join(nums)
+    return [
+        table[n.strip()]
+        for n in nums.split(",")
+        if n.strip() in table and table[n.strip()] is not None
+    ]
 
     # ✅ 매핑 처리
     snap_opts = map_nums(snapOptions, snap_option_map)
@@ -146,7 +150,9 @@ def calculate_price_with_korean_labels(
 💰 [총금액] {total_price:,}원
 
 ※ 대전/세종/청주 이외 지역은 출장비가 발생 됩니다.
+
 ※ 원판, 연회, 폐백, 2부 촬영에 관한 문의는 상담을 통해 안내드릴게요!
+
 ※ ⚠️ 최종예약을 원하시면 **상담원 연결하기**로 성함과 웨딩홀을 남겨주세요!😊
 """
 

@@ -95,16 +95,16 @@ def calculate_price_with_korean_labels(
     }
 
     # ✅ 문자열 숫자 → 매핑 함수 (공백 제거 포함)
-def map_nums(nums, table):
-    if not nums:
-        return []
-    if isinstance(nums, list):
-        nums = ",".join(nums)
-    return [
-        table[n.strip()]
-        for n in nums.split(",")
-        if n.strip() in table and table[n.strip()] is not None
-    ]
+    def map_nums(nums, table):
+        if not nums:
+            return []
+        if isinstance(nums, list):
+            nums = ",".join(nums)
+        return [
+            table[n.strip()]
+            for n in nums.split(",")
+            if n.strip() in table and table[n.strip()] is not None
+        ]
 
     # ✅ 매핑 처리
     snap_opts = map_nums(snapOptions, snap_option_map)

@@ -54,7 +54,7 @@ def calculate_price_with_korean_labels(
         "F.videoDirector": "대표감독 지정 +30",
         "F.usb": "USB추가 +5",
         "S.iphoneSnap": "아이폰스냅 추가 +15",
-        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가 +25",
+        "S.iphoneSnapPremium": "프리미엄 아이폰스냅 추가 +25",
         "S.subSnap": "서브스냅 추가 +20",
         "S.snapDesignated": "작가 지정 +10",
         "S.snapDirector": "대표작가 지정 +30",

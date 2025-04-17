@@ -48,22 +48,22 @@ def calculate_price_with_korean_labels(
     }
 
     label_map = {
-        "F.snsHighlight": "SNS용 1분 H/L (세로형)",
-        "F.subVideoDirector": "서브 영상감독 추가",
-        "F.videoDesignated": "감독 지정",
-        "F.videoDirector": "대표감독 지정",
-        "F.usb": "USB추가",
-        "S.iphoneSnap": "아이폰스냅 추가",
-        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가",
-        "S.subSnap": "서브스냅 추가",
-        "S.snapDesignated": "작가 지정",
-        "S.snapDirector": "대표작가 지정",
-        "D.partner": "짝궁",
-        "D.earlybird": "얼리버드(예식 1년 전 예약)",
-        "D.review": "계약 또는 촬영후기",
-        "D.sunday": "일요일예식",
-        "D.evening": "저녁예식(오후 4시 이후)",
-        "D.prepay": "선결제"
+        "F.snsHighlight": "SNS용 1분 H/L (세로형/마케팅동의시무료) +5 ",
+        "F.subVideoDirector": "서브 영상감독 추가 +25",
+        "F.videoDesignated": "감독 지정 +10",
+        "F.videoDirector": "대표감독 지정 +30",
+        "F.usb": "USB추가 +5",
+        "S.iphoneSnap": "아이폰스냅 추가 +15",
+        "S.iphoneSnapPremium": "아이폰스냅 프리미엄 추가 +25",
+        "S.subSnap": "서브스냅 추가 +20",
+        "S.snapDesignated": "작가 지정 +10",
+        "S.snapDirector": "대표작가 지정 +30",
+        "D.partner": "짝궁 -2 (1인당/∞) ",
+        "D.earlybird": "얼리버드(예식 1년 전 예약) -1",
+        "D.review": "계약 또는 촬영후기 -2",
+        "D.sunday": "일요일예식 -1",
+        "D.evening": "저녁예식(오후 4시 이후) -1",
+        "D.prepay": "선결제 -5"
     }
 
     film_prices = {"클래식": 60, "시그니처": 75, "노블레스": 99, "선택안함": 0}
@@ -147,7 +147,7 @@ def calculate_price_with_korean_labels(
 
 ※ 대전/세종/청주 이외 지역은 출장비가 발생 됩니다.
 ※ 원판, 연회, 폐백, 2부 촬영에 관한 문의는 상담을 통해 안내드릴게요!
-※ ⚠️ 최종예약을 원하시면 **상담 연결**후 성함과 웨딩홀을 남겨주세요!😊
+※ ⚠️ 최종예약을 원하시면 **상담원 연결하기**로 성함과 웨딩홀을 남겨주세요!😊
 """
 
     return {

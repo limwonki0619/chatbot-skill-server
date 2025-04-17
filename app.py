@@ -48,7 +48,7 @@ def calculate_price_with_korean_labels(
     }
 
     label_map = {
-        "F.snsHighlight": "SNS용 1분 H/L (세로형/마케팅동의시무료) +5",
+        "F.snsHighlight": "SNS용 1분 H/L (세로형) +5",
         "F.subVideoDirector": "서브 영상감독 추가 +25",
         "F.videoDesignated": "감독 지정 +10",
         "F.videoDirector": "대표감독 지정 +30",

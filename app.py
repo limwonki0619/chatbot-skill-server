@@ -135,7 +135,8 @@ def calculate_price_with_korean_labels(
     vat = int(total_price * 0.1)
 
     def label(items):
-        return "없음" if not items else "\n".join(label_map.get(i, i) for i in items)
+        return "없음" if not items else "\n" + "\n".join(f"{label_map.get(i, i)}" for i in items)
+
 
     summary = f"""요청해주신 구성으로 견적 안내드릴게요 :)
 
@@ -153,7 +154,7 @@ def calculate_price_with_korean_labels(
 
 ※ 원판, 연회, 폐백, 2부 촬영에 관한 문의는 상담을 통해 안내드릴게요!
 
-※ ⚠️ 최종예약을 원하시면 **상담원 연결하기**로 성함과 웨딩홀을 남겨주세요!😊
+※ ⚠️최종예약을 원하시면 **상담원 연결하기**로 성함과 웨딩홀을 남겨주세요!😊
 """
 
     return {

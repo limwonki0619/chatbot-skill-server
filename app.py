@@ -22,10 +22,9 @@ def calculate_price_with_korean_labels(
     snap_option_map = {
         "0": None,
         "1": "S.iphoneSnap",
-        "2": "S.iphoneSnapPremium",
-        "3": "S.subSnap",
-        "4": "S.snapDesignated",
-        "5": "S.snapDirector"
+        "2": "S.subSnap",
+        "3": "S.snapDesignated",
+        "4": "S.snapDirector"
     }
 
     film_option_map = {
@@ -44,7 +43,8 @@ def calculate_price_with_korean_labels(
         "3": "D.review",
         "4": "D.sunday",
         "5": "D.evening",
-        "6": "D.prepay"
+        "6": "D.prepay",
+        "7": "D.Summer"
     }
 
     label_map = {
@@ -55,7 +55,7 @@ def calculate_price_with_korean_labels(
         "F.usb": "USB추가 +5",
         "S.iphoneSnap": "아이폰스냅 추가 +15",
         "S.subSnap": "서브스냅 추가 +20",
-        "S.snapDesignated": "작가 지정 +10",
+        "S.snapDesignated": "작가 지정 +9",
         "S.snapDirector": "대표작가 지정 +30",
         "D.partner": "짝궁 -2 (1인당/∞)",
         "D.earlybird": "얼리버드(예식 1년 전 예약) -1",
@@ -72,7 +72,7 @@ def calculate_price_with_korean_labels(
     snap_option_prices = {
         "S.iphoneSnap": 15,
         "S.subSnap": 20,
-        "S.snapDesignated": 10,
+        "S.snapDesignated": 9,
         "S.snapDirector": 30
     }
 

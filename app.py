@@ -50,20 +50,20 @@ def calculate_price_with_korean_labels(
     label_map = {
         "F.snsHighlight": "SNS용 1분 H/L (세로형) +5",
         "F.subVideoDirector": "서브 영상감독 추가 +25",
-        "F.videoDesignated": "감독 지정 +10",
+        "F.videoDesignated": "감독 지정 +9",
         "F.videoDirector": "대표감독 지정 +30",
         "F.usb": "USB추가 +5",
         "S.iphoneSnap": "아이폰스냅 추가 +15",
-        "S.iphoneSnapPremium": "프리미엄 아이폰스냅 추가 +25",
         "S.subSnap": "서브스냅 추가 +20",
         "S.snapDesignated": "작가 지정 +10",
         "S.snapDirector": "대표작가 지정 +30",
         "D.partner": "짝궁 -2 (1인당/∞)",
         "D.earlybird": "얼리버드(예식 1년 전 예약) -1",
         "D.review": "계약 또는 촬영후기 -2",
-        "D.sunday": "일요일 예식 -1",
+        "D.sunday": "일요일 예식 -3",
         "D.evening": "저녁 예식(오후 4시 이후) -1",
-        "D.prepay": "선결제 할인 -5"
+        "D.prepay": "선결제 할인 -7",
+        "D.Summer": "비수기 할인 -2"
     }
 
     film_prices = {"클래식": 60, "시그니처": 75, "노블레스": 99, "선택안함": 0}
@@ -71,7 +71,6 @@ def calculate_price_with_korean_labels(
 
     snap_option_prices = {
         "S.iphoneSnap": 15,
-        "S.iphoneSnapPremium": 25,
         "S.subSnap": 20,
         "S.snapDesignated": 10,
         "S.snapDirector": 30
@@ -80,7 +79,7 @@ def calculate_price_with_korean_labels(
     film_option_prices = {
         "F.snsHighlight": 5,
         "F.subVideoDirector": 25,
-        "F.videoDesignated": 10,
+        "F.videoDesignated": 9,
         "F.videoDirector": 30,
         "F.usb": 5
     }
@@ -89,9 +88,10 @@ def calculate_price_with_korean_labels(
         "D.partner": 2,
         "D.earlybird": 1,
         "D.review": 2,
-        "D.sunday": 1,
+        "D.sunday": 3,
         "D.evening": 1,
-        "D.prepay": 5
+        "D.prepay": 7,
+        "D.Summer": 2
     }
 
     # ✅ 문자열 숫자 → 매핑 함수 (공백 제거 포함)
